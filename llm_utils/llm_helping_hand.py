@@ -2,11 +2,18 @@ import os
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate
+from pydantic import BaseModel,Field
 
 load_dotenv()
 
-llm = ChatOpenAI(api_key=os.getenv("api_key"))
 
+class Structure_output(BaseModel):
+    """ LLM Output with Structure outoput as a valid terraform script"""
+    terraform_script = Field(description="Valid Terraform script with interndation and resourse allign without any error while execution")
+
+
+llm = ChatOpenAI()
+structure_llm = llm.with_structured_output(Structure_output)
 def validate_input(prompt:str):
     if prompt:
         resp = llm.invoke(f"You are an expert in the Infrastructure as code domain. You are helping a user to create a terraform script for deploying  in the cloud. The user has selected the cloud provider. Validate if the given user has enterred the valid Terraform specific or not {prompt}, respond me in True or False only")
@@ -56,6 +63,8 @@ def query_enhancer(query: str, cloud: str, region: str, instance_type: str) -> s
     """
     prompt_template = ChatPromptTemplate.from_template(template_string)
     prompt = prompt_template.format_messages(query=query)
-    response = llm.invoke(prompt)
+    response = structure_llm.invoke(prompt)
     return response.content
 
+
+    
